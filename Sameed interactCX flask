@@ -1,0 +1,35 @@
+from flask import Flask, request, jsonify
+import requests
+import datetime
+
+app = Flask(__name__)
+
+@app.route('/', methods = ["POST"])
+def hello():
+    data = request.json
+
+    orderId = data["queryResult"]["parameters"]["orderId"]
+
+    shipmentDate= api_call(orderId)
+    
+    yourdate = str(datetime.datetime.fromisoformat(shipmentDate["shipmentDate"]).strftime('%a %d %b %Y, %I:%M%p'))
+    
+    return jsonify({"fulfillmentText":f"Your order {orderId} will be shipped on {yourdate}"})
+
+
+def api_call(orderId):
+    url = "https://orderstatusapi-dot-organization-project-311520.uc.r.appspot.com/api/getOrderStatus"
+
+    body={ "orderId": orderId }
+
+    response = requests.post(url, json=body)
+
+    if response.status_code == 200:
+        data = response.json()
+        return data
+    else:
+        print("Error:", response.status_code)
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
